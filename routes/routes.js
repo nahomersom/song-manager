@@ -7,7 +7,7 @@ module.exports = router;
 
 //add New Song
 router.post('/songs/add', async (req, res) => {
-    console.log('post',req.body)
+
     const data = new Model({
         title: req.body.title,
         artist: req.body.artist,
@@ -27,6 +27,8 @@ router.post('/songs/add', async (req, res) => {
 router.get('/songs/getAll',async (req, res) => {
     try{
         const data = await Model.find();
+        const number = await Model.find({}).select({ "album": 1, "_id": 0}).countDocuments();
+        console.log(number);
         res.json(data)
     }
     catch(error){
@@ -72,5 +74,70 @@ router.delete('/songs/delete/:id',async (req, res) => {
     }
     catch (error) {
         res.status(400).json({ message: error.message })
+    }
+})
+//Count Songs based on conditions
+router.get('/songs/statistics',async (req, res) => {
+    try{
+        const songs = await Model.find().countDocuments()
+        const artist = await Model.distinct('artist');
+        const albums = await Model.distinct('album');
+        const genre = await Model.distinct('genre');
+        const songs_per_genre = await Model.aggregate([
+            {
+                $group:{
+                    _id:"$genre",
+                    songs:{$sum: 1}
+                }
+            }
+        ])
+        const songs_per_album = await Model.aggregate([
+            {
+                $group:{
+                    _id:"$album",
+                    songs:{$sum: 1}
+                }
+            }
+        ])
+        const songs_per_artist = await Model.aggregate([
+            {
+                $group:{
+                    _id:"$artist",
+                    
+                    songs:{$sum: 1}
+                }
+            }
+        ]);
+        const albums_per_artist = await Model.aggregate([
+            {
+                $group: {
+                    _id: {
+                      artist: "$artist"
+                    }
+                  }
+                },
+                {
+                  $group: {
+                    _id: "$_id.artist",
+                    "album": { $sum: 1 }
+                  }
+                
+            }
+        ]);
+    
+        res.json({
+            songs: songs,
+            artists:artist.length,
+            albums: albums.length,
+            genre: genre.length,
+            songs_per_genre:songs_per_genre,
+            songs_per_album:songs_per_album,
+            songs_per_artist:songs_per_artist,
+            albums_per_artist:albums_per_artist
+        }
+            )
+    }
+    catch(error){
+        res.status(500).json({message: error.message})
     }
 })

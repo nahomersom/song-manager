@@ -10,7 +10,7 @@ const dataSchema = new mongoose.Schema({
         type: String
     },
     album: {
-        required: true,
+        required: false,
         type: String
     },
     genre: {

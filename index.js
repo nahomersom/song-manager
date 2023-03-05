@@ -26,7 +26,7 @@ app.use(express.json());
 
 //base endpoint and the contents of the routes
 app.use('/api', routes)
-
-app.listen(3000, () => {
-    console.log(`Server Started at ${3000}`)
+const port = process.env.PORT || 8080;
+app.listen(port, () => {
+    console.log(`Server Started at ${port}`)
 })
